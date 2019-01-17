@@ -1,0 +1,73 @@
+<html>
+    <head>
+       
+    </head>
+    <body>
+        <div>
+            <h1>Firebase Storage tutorial</h1>
+        <input id="input"  type="file"  accept="image/*" />
+          <button onclick='uploadFile()'>Upload</button>
+          <button onclick='showImages()'>Show Images</button>
+        <img id='cuteImage' src='' alt ='cutImage'/>
+        </div>
+  
+    <script src="https://www.gstatic.com/firebasejs/5.7.3/firebase.js"></script>
+    <script src='index.js'></script> 
+    <script>
+        // Initialize Firebase
+        var config = {
+          apiKey: "",
+          authDomain: "",
+          databaseURL: "",
+          projectId: "",
+          storageBucket: "",
+          messagingSenderId: ""
+        };
+        firebase.initializeApp(config);
+      </script>
+      <script>
+        //sign in anonymously
+      firebase.auth().signInAnonymously().catch(function(error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+  // ...
+  console.log(errorCode,errorMessage)
+})
+//if user is logged in 
+firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+          console.log(user.uid)
+      }})
+      //upload file to firebase storage
+     function uploadFile(){
+        var inputFile = document.getElementById('input').files[0]
+        var inputFileName = inputFile.name
+        firebase.storage().ref(inputFileName).put(inputFile).then(function (fileSnapshot) {
+          // Generate a public URL for the file.
+          return fileSnapshot.ref.getDownloadURL().then((url) => {
+            // save URL of file in database
+            return firebase.database().ref(`/`).push({
+              imageURL: url
+            });
+          });
+         
+        }).catch(function (error) {
+          console.error('There was an error uploading a file to Cloud Storage:', error);
+        });
+     }
+
+     //fetch imageURL from database and set it to the img tag
+     function showImages(){
+        firebase.database()
+        .ref('/')
+        .once('value',(snapshot)=>{
+            var snapshotArray = Object.values(snapshot.val())[0]
+            document.getElementById('cuteImage').src = snapshotArray.imageURL
+        })
+    }
+
+
+</script>
+  </body>
+</html>
